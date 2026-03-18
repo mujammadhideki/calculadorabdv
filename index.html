@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora BDV Pro - GitHub Version</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #020617; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .tab-active { border-bottom: 2px solid #3b82f6; color: white; }
+    </style>
+</head>
+<body class="text-slate-200 min-h-screen pb-20">
+
+    <div class="max-w-5xl mx-auto px-4 py-8">
+        <!-- Encabezado Principal -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-slate-800 pb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-white tracking-tight italic">CALCULADORA <span class="text-blue-500 font-extrabold text-3xl">BDV</span></h1>
+                <p class="text-slate-500 text-[10px] mt-1 uppercase tracking-widest font-bold text-blue-400">Panel de Control de Arbitraje</p>
+            </div>
+            <div class="flex gap-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-right">
+                    <p class="text-[9px] text-slate-500 uppercase font-bold">Saldo en Cuenta (Stock)</p>
+                    <p id="statStock" class="text-lg font-bold mono text-emerald-400">$0.00</p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-right">
+                    <p class="text-[9px] text-slate-500 uppercase font-bold">Uso del Cupo</p>
+                    <p id="statLimite" class="text-lg font-bold mono text-blue-400">$0 / $2k</p>
+                </div>
+                <button onclick="resetGeneral()" class="bg-red-500/10 hover:bg-red-500/20 text-red-500 text-[10px] font-bold px-3 rounded-xl border border-red-500/20 transition-all uppercase">Reiniciar Todo</button>
+            </div>
+        </div>
+
+        <!-- Navegación de Modos -->
+        <div class="flex gap-8 mb-8 border-b border-slate-800">
+            <button onclick="setTab('zinli')" id="tabZinli" class="pb-3 text-sm font-bold uppercase tracking-widest transition-all tab-active">Zinli / Recargas</button>
+            <button onclick="setTab('giftcard')" id="tabGift" class="pb-3 text-sm font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 transition-all">Gift Cards Amazon</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Formulario de Entrada -->
+            <div class="lg:col-span-5 space-y-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl">
+                    <h2 class="text-sm font-bold text-slate-400 uppercase mb-6 flex items-center gap-2">
+                        <span class="w-1.5 h-4 bg-blue-500 rounded-full"></span> Nueva Operación
+                    </h2>
+
+                    <div class="space-y-5">
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase">1. Venta en Binance</label>
+                            <div class="flex gap-3">
+                                <input type="number" id="inUsdt" oninput="calc()" placeholder="Monto USDT" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl outline-none focus:border-blue-500 transition-all mono text-sm">
+                                <input type="number" id="inTasaV" oninput="calc()" placeholder="Tasa Venta" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl outline-none focus:border-blue-500 transition-all mono text-sm">
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase">2. Tasa Compra BDV</label>
+                            <input type="number" id="inTasaC" oninput="calc()" value="51.5" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl outline-none focus:border-emerald-500 transition-all mono text-sm text-emerald-400 font-bold">
+                        </div>
+
+                        <div id="giftSelectorBox" class="hidden space-y-2">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase">3. Selección de Tarjeta</label>
+                            <select id="inGiftCard" onchange="calc()" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl outline-none focus:border-purple-500 transition-all mono text-xs text-purple-400"></select>
+                        </div>
+
+                        <!-- Resultados en Tiempo Real -->
+                        <div class="bg-slate-950 rounded-2xl p-4 border border-slate-800 space-y-3">
+                            <div class="flex justify-between text-[10px]">
+                                <span class="text-slate-500">Dólares Comprados:</span>
+                                <span id="resDolarComprado" class="mono text-emerald-400 font-bold">$0</span>
+                            </div>
+                            <div class="flex justify-between text-[10px] pb-2 border-b border-slate-800/50">
+                                <span class="text-slate-500">Costo Operación:</span>
+                                <span id="resCostoOp" class="mono text-red-400">-$0.00</span>
+                            </div>
+                            <div class="bg-blue-500/5 p-4 rounded-xl border border-blue-500/10 flex justify-between items-center">
+                                <div>
+                                    <span class="text-[9px] text-blue-400 font-bold uppercase block">Recibes Neto</span>
+                                    <span id="resNetoFinal" class="text-xl font-bold mono text-blue-300">$0.00</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[9px] text-slate-500 uppercase block">Margen</span>
+                                    <span id="resMargen" class="text-sm font-bold mono text-white">0.000</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button id="saveBtn" onclick="saveOp()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl transition-all uppercase text-xs tracking-widest">
+                            Guardar Operación
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historial -->
+            <div class="lg:col-span-7">
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col min-h-[500px]">
+                    <div class="p-5 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Historial de Actividad</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-[11px]">
+                            <thead class="bg-slate-950 text-slate-500 uppercase font-bold border-b border-slate-800">
+                                <tr>
+                                    <th class="p-4">Operación</th>
+                                    <th class="p-4">Compra BDV</th>
+                                    <th class="p-4">Recibido</th>
+                                    <th class="p-4 text-right">Margen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody" class="divide-y divide-slate-800 mono text-slate-300"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de Gift Cards
+        const giftCards = [
+            { get: 1.1, cost: 1.31 }, { get: 5.1, cost: 6.10 }, { get: 10.1, cost: 12.06 },
+            { get: 25.1, cost: 29.97 }, { get: 50.1, cost: 59.82 }, { get: 100.1, cost: 114.32 }
+        ];
+
+        let currentTab = 'zinli';
+        let history = JSON.parse(localStorage.getItem('bdv_history_v1')) || [];
+        let globalStock = parseFloat(localStorage.getItem('bdv_stock_v1')) || 0;
+        const LIMIT_MAX = 2000;
+
+        function initGiftSelector() {
+            const selGift = document.getElementById('inGiftCard');
+            selGift.innerHTML = giftCards.map(gc => `<option value="${gc.cost}" data-get="${gc.get}">Pagas $${gc.cost} -> Recibes $${gc.get}</option>`).join('');
+        }
+
+        function setTab(tab) {
+            currentTab = tab;
+            document.getElementById('tabZinli').className = `pb-3 text-sm font-bold uppercase tracking-widest transition-all ${tab === 'zinli' ? 'tab-active' : 'text-slate-500 hover:text-slate-300'}`;
+            document.getElementById('tabGift').className = `pb-3 text-sm font-bold uppercase tracking-widest transition-all ${tab === 'giftcard' ? 'tab-active' : 'text-slate-500 hover:text-slate-300'}`;
+            document.getElementById('giftSelectorBox').classList.toggle('hidden', tab !== 'giftcard');
+            calc();
+        }
+
+        function calc() {
+            const uVenta = parseFloat(document.getElementById('inUsdt').value) || 0;
+            const tVenta = parseFloat(document.getElementById('inTasaV').value) || 0;
+            const tCompra = parseFloat(document.getElementById('inTasaC').value) || 0;
+
+            if (uVenta <= 0) return null;
+
+            // Lógica de compra BDV
+            const bsDisponibles = (uVenta * tVenta) * 0.9998 * 0.995; 
+            const usdEnteros = Math.floor(bsDisponibles / tCompra);
+            
+            document.getElementById('resDolarComprado').innerText = "$" + usdEnteros;
+
+            let costUsd = 0; let receivedUsd = 0;
+
+            if (currentTab === 'zinli') {
+                costUsd = usdEnteros;
+                receivedUsd = (usdEnteros * 0.9625) * 0.975 * 0.935;
+            } else {
+                const sel = document.getElementById('inGiftCard');
+                costUsd = parseFloat(sel.value) * 1.025;
+                receivedUsd = parseFloat(sel.options[sel.selectedIndex].dataset.get);
+            }
+
+            const margen = receivedUsd - uVenta;
+            
+            document.getElementById('resCostoOp').innerText = "-$" + costUsd.toFixed(2);
+            document.getElementById('resNetoFinal').innerText = "$" + receivedUsd.toFixed(2);
+            const mLabel = document.getElementById('resMargen');
+            mLabel.innerText = margen.toFixed(3);
+            mLabel.className = `text-sm font-bold mono ${margen >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+
+            return { type: currentTab, uVenta, tVenta, usdEnteros, costUsd, receivedUsd, margen };
+        }
+
+        function saveOp() {
+            const res = calc();
+            if (!res) return;
+            globalStock = (globalStock + res.usdEnteros) - res.costUsd;
+            history.unshift({ id: Date.now(), ...res, stockSnap: globalStock });
+            localStorage.setItem('bdv_history_v1', JSON.stringify(history));
+            localStorage.setItem('bdv_stock_v1', globalStock);
+            render();
+        }
+
+        function render() {
+            document.getElementById('statStock').innerText = `$${globalStock.toFixed(2)}`;
+            const consumed = history.reduce((a, b) => a + b.usdEnteros, 0);
+            document.getElementById('statLimite').innerText = `$${consumed} / $2k`;
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = history.map(h => `
+                <tr class="hover:bg-slate-800/40">
+                    <td class="p-4 border-l-2 ${h.type === 'zinli' ? 'border-blue-500' : 'border-purple-500'}">
+                        <div class="text-white font-bold">$${h.uVenta} <span class="text-slate-500 text-[9px]">@${h.tVenta}</span></div>
+                        <div class="text-[8px] uppercase text-slate-500">${h.type}</div>
+                    </td>
+                    <td class="p-4 text-emerald-400 font-bold">$${h.usdEnteros}</td>
+                    <td class="p-4 text-blue-300 font-bold">$${h.receivedUsd.toFixed(2)}</td>
+                    <td class="p-4 text-right font-bold ${h.margen >= 0 ? 'text-emerald-400' : 'text-red-400'}">${h.margen.toFixed(3)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function resetGeneral() {
+            if(confirm("¿Reiniciar toda la base de datos?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        initGiftSelector();
+        render();
+    </script>
+</body>
+</html>
