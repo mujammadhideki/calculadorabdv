@@ -3,140 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora BDV Pro - Sistema Completo</title>
+    <title>Calculadora BDV Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0b0e14; color: #e2e8f0; }
         .mono { font-family: 'JetBrains Mono', monospace; }
         .card-dark { background-color: #11141d; border: 1px solid #1e293b; }
-        .input-dark { background-color: #0b0e14; border: 1px solid #1e293b; color: white; }
-        .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; }
-        ::-webkit-scrollbar { width: 4px; }
+        .input-dark { background-color: #0b0e14; border: 1px solid #1e293b; color: white; transition: all 0.2s; }
+        .input-dark:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
     </style>
 </head>
 <body class="min-h-screen pb-10">
 
-    <div class="max-w-5xl mx-auto px-4 py-6">
-        <!-- Header con Stats -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <div class="max-w-6xl mx-auto px-4 py-6">
+        <!-- HEADER Y MÉTRICAS -->
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
             <div>
-                <h1 class="text-xl font-bold tracking-tighter italic uppercase">Calculadora <span class="text-blue-500 font-extrabold text-2xl">BDV</span></h1>
-                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Panel de Control de Arbitraje</p>
+                <h1 class="text-2xl font-black italic uppercase tracking-tight">Calculadora <span class="text-blue-500">BDV PRO</span></h1>
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Arbitraje Continuo v4.0</p>
             </div>
             
-            <div class="flex gap-3 w-full md:w-auto">
-                <div class="card-dark rounded-xl px-4 py-2 flex-1 md:flex-none text-right shadow-lg border-l-4 border-l-blue-500">
-                    <p class="text-[9px] text-slate-500 uppercase font-bold tracking-widest">Saldo Disponible</p>
-                    <p id="statStock" class="text-lg font-bold mono text-blue-400">$0.00</p>
+            <div class="flex flex-wrap gap-3 w-full lg:w-auto">
+                <div class="card-dark rounded-xl px-5 py-3 flex-1 lg:flex-none border-l-4 border-l-blue-500 shadow-lg">
+                    <p class="text-[9px] text-slate-400 uppercase font-bold tracking-widest">Saldo Disponible (Zinli)</p>
+                    <p id="statSaldo" class="text-xl font-bold mono text-blue-400">$0.00</p>
                 </div>
-                <div class="card-dark rounded-xl px-4 py-2 flex-1 md:flex-none text-right shadow-lg border-l-4 border-l-emerald-500">
-                    <p class="text-[9px] text-slate-500 uppercase font-bold tracking-widest">Ganancia Hoy</p>
-                    <p id="statProfit" class="text-lg font-bold mono text-emerald-400">+$0.00</p>
+                <div class="card-dark rounded-xl px-5 py-3 flex-1 lg:flex-none border-l-4 border-l-orange-500 shadow-lg">
+                    <p class="text-[9px] text-slate-400 uppercase font-bold tracking-widest">Acumulado Bs</p>
+                    <p id="statBs" class="text-xl font-bold mono text-orange-400">0.00 Bs</p>
+                </div>
+                <div class="card-dark rounded-xl px-5 py-3 flex-1 lg:flex-none border-l-4 border-l-emerald-500 shadow-lg">
+                    <p class="text-[9px] text-slate-400 uppercase font-bold tracking-widest">Ganancia Hoy</p>
+                    <p id="statProfit" class="text-xl font-bold mono text-emerald-400">+$0.00</p>
                 </div>
             </div>
-        </div>
-
-        <!-- Pestañas -->
-        <div class="flex gap-6 mb-6 border-b border-slate-800">
-            <button onclick="setTab('zinli')" id="tabZinli" class="pb-3 text-xs font-bold uppercase tracking-widest transition-all tab-active">Zinli / Recargas</button>
-            <button onclick="setTab('giftcard')" id="tabGift" class="pb-3 text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 transition-all">Gift Cards Amazon</button>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- Columna Izquierda: Entradas -->
-            <div class="lg:col-span-4 space-y-4">
-                <div class="card-dark rounded-3xl p-5 shadow-2xl">
-                    <h2 class="text-[10px] font-bold text-slate-500 uppercase mb-4 flex items-center gap-2">
-                        <span class="w-1.5 h-3 bg-blue-500 rounded-full"></span> Nueva Operación
-                    </h2>
-                    
-                    <div class="space-y-4">
-                        <div class="space-y-1">
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase">Venta USDT (Binance)</label>
-                            <input type="number" id="inUsdt" oninput="calc()" placeholder="0.00" class="w-full input-dark p-3 rounded-xl outline-none focus:border-blue-500 mono">
-                        </div>
+            
+            <!-- COLUMNA IZQUIERDA: CALCULADORA LINEAL -->
+            <div class="lg:col-span-8 space-y-6">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- PASO 1: VENTA USDT -->
+                    <div class="card-dark rounded-3xl p-5 shadow-xl relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
+                        <h2 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">1. Venta de USDT</h2>
                         
-                        <div class="space-y-1">
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase">Tasa de Venta (P2P)</label>
-                            <input type="number" id="inTasaV" oninput="calc()" placeholder="65.50" class="w-full input-dark p-3 rounded-xl outline-none focus:border-blue-500 mono">
-                        </div>
-
-                        <div class="space-y-1">
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase">Tasa Compra BDV</label>
-                            <input type="number" id="inTasaC" oninput="calc()" value="51.50" class="w-full input-dark p-3 rounded-xl outline-none focus:border-emerald-500 text-emerald-400 font-bold mono">
-                        </div>
-
-                        <div id="giftSelectorBox" class="hidden space-y-1 pt-2 border-t border-slate-800">
-                            <label class="block text-[10px] font-bold text-purple-400 uppercase">Seleccionar Gift Card</label>
-                            <select id="inGiftCard" onchange="calc()" class="w-full input-dark p-3 rounded-xl outline-none focus:border-purple-500 text-purple-300 mono text-[11px]"></select>
-                        </div>
-
-                        <div class="pt-4">
-                            <button onclick="saveOp()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl transition-all shadow-lg active:scale-95 uppercase text-[10px] tracking-widest">
-                                Registrar Operación
-                            </button>
-                            <button onclick="resetStock()" class="w-full mt-2 text-[9px] text-slate-600 hover:text-red-400 uppercase font-bold transition-colors">Reiniciar Todo</button>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cantidad USDT a Vender</label>
+                                <input type="number" id="inUsdt" oninput="calc()" placeholder="Ej. 42.23" class="w-full input-dark p-2.5 rounded-lg mono text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tasa de Venta</label>
+                                <input type="number" id="inTasaV" oninput="calc()" placeholder="Ej. 65.20" class="w-full input-dark p-2.5 rounded-lg mono text-sm">
+                            </div>
+                            
+                            <div class="pt-3 border-t border-slate-800 space-y-1.5 text-[11px] mono">
+                                <div class="flex justify-between text-slate-300"><span>Bs Brutos:</span><span id="outBsBrutos">0.00 Bs</span></div>
+                                <div class="flex justify-between text-red-400"><span>Comisión Binance (0.20%):</span><span id="outComiBinance">-0.00 Bs</span></div>
+                                <div class="flex justify-between text-red-400"><span>Comisión Retiro (0.30%):</span><span id="outComiRetiro">-0.00 Bs</span></div>
+                                <div class="flex justify-between text-blue-400 font-bold pt-1"><span>Bs Netos en BDV:</span><span id="outBsNetos">0.00 Bs</span></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Columna Central: Resultados -->
-            <div class="lg:col-span-4 space-y-4">
-                <div class="card-dark rounded-3xl p-5 shadow-2xl h-full flex flex-col">
-                    <h2 class="text-[10px] font-bold text-slate-500 uppercase mb-4">Análisis de Retorno</h2>
-                    
-                    <div id="desglose" class="space-y-2 text-[11px] mono flex-grow">
-                        <!-- Se llena vía JS -->
-                    </div>
-
-                    <div class="mt-6 pt-6 border-t border-slate-800 space-y-3">
-                        <div class="flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase">
-                            <span>Neto en BDV:</span>
-                            <span id="resBsNeto" class="text-white font-bold mono">0.00 Bs</span>
-                        </div>
+                    <!-- PASO 2: COMPRA BDV -->
+                    <div class="card-dark rounded-3xl p-5 shadow-xl relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
+                        <h2 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">2. Compra en BDV</h2>
                         
-                        <div class="flex justify-between items-center">
-                            <div class="text-left">
-                                <p class="text-[9px] text-emerald-500 font-bold uppercase">Compras $</p>
-                                <p id="resDolarComprado" class="text-xl font-bold text-emerald-400">$0</p>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tasa Compra BDV</label>
+                                <input type="number" id="inTasaC" oninput="calc()" placeholder="Ej. 51.32" class="w-full input-dark p-2.5 rounded-lg mono text-sm text-emerald-400">
                             </div>
-                            <div class="text-right">
-                                <p class="text-[9px] text-orange-500 font-bold uppercase">Sobrante</p>
-                                <p id="resSobrante" class="text-xl font-bold text-orange-400">0.00</p>
-                            </div>
-                        </div>
-
-                        <div class="bg-blue-600/10 p-4 rounded-2xl border border-blue-500/30">
-                            <p class="text-[9px] text-blue-400 font-bold uppercase">Neto Final Est.</p>
-                            <div class="flex justify-between items-end">
-                                <p id="resNetoFinal" class="text-2xl font-bold text-blue-300">$0.00</p>
-                                <p id="resMargen" class="text-sm font-bold text-white mb-1">0.00</p>
+                            
+                            <div class="pt-3 mt-4 border-t border-slate-800 space-y-2 text-[11px] mono">
+                                <div class="flex justify-between text-emerald-400 font-bold text-sm"><span>Dólares Comprados BDV:</span><span id="outUsdBDV">$0</span></div>
+                                <div class="flex justify-between text-orange-400"><span>Sobrante Bs:</span><span id="outSobranteBs">0.00 Bs</span></div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- PASO 3: COSTOS ZINLI -->
+                    <div class="card-dark rounded-3xl p-5 shadow-xl relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-purple-500"></div>
+                        <h2 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">3. Costos Zinli</h2>
+                        
+                        <div class="space-y-2.5 text-[11px] mono mt-6">
+                            <div class="flex justify-between text-red-400"><span>Costo Recarga Zinli (3.75%):</span><span id="outComiRecarga">-$0.00</span></div>
+                            <div class="flex justify-between text-slate-300"><span>Neto en Zinli:</span><span id="outNetoZinli">$0.00</span></div>
+                            <div class="flex justify-between text-red-400"><span>Costo de Servicio (2.50%):</span><span id="outComiServicio">-$0.00</span></div>
+                            <div class="flex justify-between text-purple-400 font-bold pt-2 border-t border-slate-800 text-xs"><span>Neto para Gift Cards:</span><span id="outNetoGC">$0.00</span></div>
+                        </div>
+                    </div>
+
+                    <!-- PASO 4: RESUMEN FINAL -->
+                    <div class="card-dark rounded-3xl p-5 shadow-xl relative overflow-hidden flex flex-col justify-between">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-indigo-500"></div>
+                        <div>
+                            <h2 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">4. Resumen Final</h2>
+                            
+                            <label class="block text-[10px] font-bold text-indigo-400 uppercase mb-1">Seleccionar Gift Card a Comprar</label>
+                            <select id="inGiftCard" onchange="calc()" class="w-full input-dark p-2 rounded-lg mono text-[10px] mb-4 text-indigo-300">
+                                <option value="0" data-get="0">Ninguna (Solo Acumular Saldo)</option>
+                                <!-- Se llena por JS -->
+                            </select>
+
+                            <div class="space-y-1.5 text-[10px] mono">
+                                <div class="flex justify-between font-bold text-sm text-white bg-slate-800/50 p-1.5 rounded">
+                                    <span>TOTAL USD OBTENIDOS:</span><span id="outFinalUSD">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-slate-400 px-1"><span>DÓLARES INICIALES:</span><span id="outUsdtInicial">0.00</span></div>
+                                <div class="flex justify-between font-bold text-emerald-400 px-1"><span>PROFIT NETO:</span><span id="outProfit">0.00</span></div>
+                            </div>
+                        </div>
+
+                        <button onclick="saveOp()" class="w-full mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg active:scale-95 uppercase text-[10px] tracking-widest">
+                            Registrar Operación
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <!-- Columna Derecha: Historial -->
-            <div class="lg:col-span-4 space-y-4">
-                <div class="card-dark rounded-3xl p-5 shadow-2xl h-[500px] flex flex-col">
-                    <h2 class="text-[10px] font-bold text-slate-500 uppercase mb-4 flex justify-between items-center">
-                        Historial del Día
-                        <span id="histCount" class="bg-slate-800 px-2 py-0.5 rounded text-blue-400">0</span>
-                    </h2>
+            <!-- COLUMNA DERECHA: HISTORIAL -->
+            <div class="lg:col-span-4">
+                <div class="card-dark rounded-3xl p-5 shadow-xl h-full flex flex-col min-h-[500px]">
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+                        <h2 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Historial del Día</h2>
+                        <button onclick="resetAll()" class="text-[9px] bg-red-500/10 text-red-400 hover:bg-red-500/20 px-2 py-1 rounded font-bold uppercase transition-colors">Reiniciar</button>
+                    </div>
                     
-                    <div id="historyList" class="overflow-y-auto flex-grow space-y-2 pr-1">
-                        <!-- Items del historial -->
+                    <div id="historyList" class="overflow-y-auto flex-grow space-y-3 pr-2">
+                        <!-- Items de historial -->
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 
     <script>
+        // Array exacto de Gift Cards
         const giftCards = [
             { get: 1.1, cost: 1.31 }, { get: 3.1, cost: 3.70 }, { get: 5.1, cost: 6.10 },
             { get: 7.1, cost: 8.48 }, { get: 10.1, cost: 12.06 }, { get: 15.1, cost: 18.03 },
@@ -145,32 +160,36 @@
             { get: 50.1, cost: 59.82 }, { get: 55.1, cost: 65.79 }, { get: 60.1, cost: 71.76 },
             { get: 65.1, cost: 77.73 }, { get: 70.1, cost: 83.70 }, { get: 75.1, cost: 89.67 },
             { get: 80.1, cost: 95.63 }, { get: 85.1, cost: 101.60 }, { get: 90.1, cost: 107.58 },
-            { get: 95.1, cost: 113.55 }, { get: 100.1, cost: 114.32 }, { get: 110.1, cost: 125.74 },
-            { get: 120.1, cost: 137.16 }, { get: 130.1, cost: 148.58 }, { get: 140.1, cost: 160.00 },
-            { get: 150.1, cost: 171.42 }, { get: 160.1, cost: 182.84 }, { get: 170.1, cost: 194.27 },
-            { get: 180.1, cost: 205.69 }, { get: 190.1, cost: 217.11 }, { get: 200.1, cost: 228.53 }
+            { get: 95.1, cost: 113.55 }, { get: 100.1, cost: 114.32 }
         ];
 
-        let currentTab = 'zinli';
+        // Estado Global (Métricas y Acumulados)
         let state = {
-            stock: parseFloat(localStorage.getItem('bdv_stock_v3')) || 0,
-            history: JSON.parse(localStorage.getItem('bdv_history_v3')) || [],
-            profit: 0
+            saldoZinli: parseFloat(localStorage.getItem('bdv_saldo_zinli')) || 0,
+            acumuladoBs: parseFloat(localStorage.getItem('bdv_acumulado_bs')) || 0,
+            historial: JSON.parse(localStorage.getItem('bdv_historial_day')) || []
+        };
+
+        // Variables temporales para el cálculo actual
+        let currentCalc = {
+            netoParaGC: 0,
+            sobranteBs: 0,
+            gcCost: 0,
+            gcGet: 0,
+            usdtInicial: 0,
+            profitOp: 0
         };
 
         function init() {
             const sel = document.getElementById('inGiftCard');
-            sel.innerHTML = giftCards.map(gc => `<option value="${gc.cost}" data-get="${gc.get}">Tarjeta $${gc.get.toFixed(1)} (Costo $${gc.cost.toFixed(2)})</option>`).join('');
-            renderHistory();
-            updateStats();
-        }
-
-        function setTab(tab) {
-            currentTab = tab;
-            document.getElementById('tabZinli').className = `pb-3 text-xs font-bold uppercase tracking-widest transition-all ${tab === 'zinli' ? 'tab-active' : 'text-slate-500'}`;
-            document.getElementById('tabGift').className = `pb-3 text-xs font-bold uppercase tracking-widest transition-all ${tab === 'giftcard' ? 'tab-active' : 'text-slate-500'}`;
-            document.getElementById('giftSelectorBox').classList.toggle('hidden', tab !== 'giftcard');
-            calc();
+            giftCards.forEach(gc => {
+                const opt = document.createElement('option');
+                opt.value = gc.cost;
+                opt.dataset.get = gc.get;
+                opt.innerText = `Tarjeta $${gc.get.toFixed(1)} (Cuesta $${gc.cost.toFixed(2)})`;
+                sel.appendChild(opt);
+            });
+            updateUI();
         }
 
         function calc() {
@@ -178,176 +197,185 @@
             const tVenta = parseFloat(document.getElementById('inTasaV').value) || 0;
             const tCompra = parseFloat(document.getElementById('inTasaC').value) || 0;
 
-            if (uVenta <= 0 || tVenta <= 0) {
-                document.getElementById('desglose').innerHTML = '<p class="text-slate-600 italic">Esperando datos...</p>';
-                return;
-            }
-
-            // Cálculos base de la venta
+            // --- PASO 1 ---
             const bsBrutos = uVenta * tVenta;
-            const comiBinance = bsBrutos * 0.0002;
-            const comiRetiro = bsBrutos * 0.005;
+            const comiBinance = bsBrutos * 0.0020;
+            const comiRetiro = bsBrutos * 0.0030;
             const bsNetos = bsBrutos - comiBinance - comiRetiro;
 
-            const usdComprados = Math.floor(bsNetos / tCompra);
-            const sobranteBs = bsNetos % tCompra;
+            document.getElementById('outBsBrutos').innerText = bsBrutos.toFixed(2) + " Bs";
+            document.getElementById('outComiBinance').innerText = "-" + comiBinance.toFixed(2) + " Bs";
+            document.getElementById('outComiRetiro').innerText = "-" + comiRetiro.toFixed(2) + " Bs";
+            document.getElementById('outBsNetos').innerText = bsNetos.toFixed(2) + " Bs";
 
-            let receivedUsd = 0;
-            let htmlDesglose = "";
-
-            if (currentTab === 'zinli') {
-                const comiRecarga = usdComprados * 0.0375;
-                const netoZinli = usdComprados - comiRecarga;
-                const comiServicio = netoZinli * 0.025;
-                // Estimación de retorno final tras brecha cambiaria
-                receivedUsd = (netoZinli - comiServicio) * 0.94; 
-
-                htmlDesglose = `
-                    <div class="flex justify-between"><span>Bruto Venta:</span><span class="text-white">${bsBrutos.toFixed(2)} Bs</span></div>
-                    <div class="flex justify-between text-red-400/80"><span>Comi. Binance:</span><span>-${comiBinance.toFixed(2)} Bs</span></div>
-                    <div class="flex justify-between text-red-400/80"><span>Comi. Retiro:</span><span>-${comiRetiro.toFixed(2)} Bs</span></div>
-                    <div class="flex justify-between border-t border-slate-800 pt-1 mt-1 font-bold"><span>En BDV:</span><span class="text-blue-400">${bsNetos.toFixed(2)} Bs</span></div>
-                    <div class="flex justify-between mt-2"><span>Dólares BDV:</span><span class="text-emerald-400">$${usdComprados}</span></div>
-                    <div class="flex justify-between text-red-400/80"><span>Costos Zinli:</span><span>-$${(comiRecarga + comiServicio).toFixed(2)}</span></div>
-                `;
-            } else {
-                const sel = document.getElementById('inGiftCard');
-                const cost = parseFloat(sel.value);
-                const get = parseFloat(sel.options[sel.selectedIndex].dataset.get);
-                receivedUsd = get;
-
-                htmlDesglose = `
-                    <div class="flex justify-between"><span>Neto en BDV:</span><span class="text-blue-400">${bsNetos.toFixed(2)} Bs</span></div>
-                    <div class="flex justify-between"><span>Dólares Comprados:</span><span class="text-emerald-400">$${usdComprados}</span></div>
-                    <div class="flex justify-between text-purple-400 mt-2"><span>Costo de Card:</span><span>$${cost.toFixed(2)}</span></div>
-                    <div class="flex justify-between font-bold text-white border-t border-slate-800 pt-1"><span>Obtienes:</span><span>$${get.toFixed(2)}</span></div>
-                `;
+            // --- PASO 2 ---
+            let usdBDV = 0;
+            let sobranteBs = 0;
+            if (tCompra > 0 && bsNetos > 0) {
+                usdBDV = Math.floor(bsNetos / tCompra);
+                sobranteBs = bsNetos - (usdBDV * tCompra);
             }
 
-            document.getElementById('desglose').innerHTML = htmlDesglose;
-            document.getElementById('resBsNeto').innerText = bsNetos.toLocaleString('es-VE', {minimumFractionDigits: 2}) + " Bs";
-            document.getElementById('resDolarComprado').innerText = "$" + usdComprados;
-            document.getElementById('resSobrante').innerText = sobranteBs.toFixed(2);
-            document.getElementById('resNetoFinal').innerText = "$" + receivedUsd.toFixed(2);
+            document.getElementById('outUsdBDV').innerText = "$" + usdBDV;
+            document.getElementById('outSobranteBs').innerText = sobranteBs.toFixed(2) + " Bs";
+
+            // --- PASO 3 ---
+            const costoRecarga = usdBDV * 0.0375;
+            const netoZinli = usdBDV - costoRecarga;
+            const costoServicio = netoZinli * 0.0250;
+            const netoParaGC = netoZinli - costoServicio;
+
+            document.getElementById('outComiRecarga').innerText = "-$" + costoRecarga.toFixed(2);
+            document.getElementById('outNetoZinli').innerText = "$" + netoZinli.toFixed(2);
+            document.getElementById('outComiServicio').innerText = "-$" + costoServicio.toFixed(2);
+            document.getElementById('outNetoGC').innerText = "$" + netoParaGC.toFixed(2);
+
+            // --- PASO 4 (Gift Card) ---
+            const gcSelect = document.getElementById('inGiftCard');
+            const gcCost = parseFloat(gcSelect.value) || 0;
+            const gcGet = parseFloat(gcSelect.options[gcSelect.selectedIndex].dataset.get) || 0;
+
+            let finalUSD = gcGet > 0 ? gcGet : 0;
+            let profit = 0;
+
+            // Lógica de Profit: Si vende USDT, el profit es la diferencia. 
+            // Si solo acumula (no compra GC), el profit pendiente es 0.
+            if (gcGet > 0) {
+                profit = finalUSD - uVenta;
+            }
+
+            document.getElementById('outFinalUSD').innerText = "$" + finalUSD.toFixed(2);
+            document.getElementById('outUsdtInicial').innerText = uVenta.toFixed(2);
             
-            const profit = receivedUsd - uVenta;
-            const mLabel = document.getElementById('resMargen');
-            mLabel.innerText = (profit >= 0 ? "+" : "") + profit.toFixed(3);
-            mLabel.className = `text-sm font-bold mono ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            const profitEl = document.getElementById('outProfit');
+            profitEl.innerText = (profit >= 0 ? "+" : "") + profit.toFixed(2);
+            profitEl.className = profit >= 0 ? "text-emerald-400" : "text-red-400";
+
+            // Guardar variables temporales para el momento de registrar
+            currentCalc = {
+                netoParaGC: netoParaGC,
+                sobranteBs: sobranteBs,
+                gcCost: gcCost,
+                gcGet: gcGet,
+                usdtInicial: uVenta,
+                profitOp: profit
+            };
         }
 
         function saveOp() {
-            const uV = parseFloat(document.getElementById('inUsdt').value) || 0;
-            const tV = parseFloat(document.getElementById('inTasaV').value) || 0;
-            const tC = parseFloat(document.getElementById('inTasaC').value) || 0;
-            
-            if(!uV || !tV) return;
-
-            // Cálculos finales para el historial
-            const bsNetos = (uV * tV) * 0.9998 * 0.995;
-            const usdComprados = Math.floor(bsNetos / tC);
-            
-            let finalUsd = 0;
-            let type = currentTab === 'zinli' ? 'Recarga' : 'GiftCard';
-            let costUsd = 0;
-
-            if (currentTab === 'zinli') {
-                finalUsd = (usdComprados * 0.9625 * 0.975) * 0.94;
-                state.stock += usdComprados;
-            } else {
-                const sel = document.getElementById('inGiftCard');
-                costUsd = parseFloat(sel.value);
-                finalUsd = parseFloat(sel.options[sel.selectedIndex].dataset.get);
-                
-                // Descontar del stock si hay suficiente, si no avisar
-                if(state.stock < costUsd) {
-                    if(!confirm(`No tienes suficiente Stock ($${state.stock.toFixed(2)}) para esta Gift Card ($${costUsd.toFixed(2)}). ¿Registrar de todas formas?`)) return;
-                }
-                state.stock -= costUsd;
-            }
-
-            const opProfit = finalUsd - uV;
-
-            const newOp = {
-                id: Date.now(),
-                type,
-                in: uV,
-                out: finalUsd,
-                profit: opProfit,
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-            };
-
-            state.history.unshift(newOp);
-            saveToLocal();
-            renderHistory();
-            updateStats();
-            
-            // Feedback
-            document.getElementById('inUsdt').value = "";
-            calc();
-        }
-
-        function renderHistory() {
-            const list = document.getElementById('historyList');
-            const count = document.getElementById('histCount');
-            count.innerText = state.history.length;
-
-            if(state.history.length === 0) {
-                list.innerHTML = '<div class="text-center py-10 text-slate-600 text-[11px] uppercase font-bold tracking-widest">Sin registros hoy</div>';
+            // Validaciones
+            if (currentCalc.netoParaGC === 0 && currentCalc.gcCost === 0) {
+                alert("Ingresa valores para calcular o selecciona una Gift Card para comprar con tu saldo.");
                 return;
             }
 
-            list.innerHTML = state.history.map(op => `
-                <div class="bg-slate-900/40 p-3 rounded-2xl border border-slate-800/50 flex justify-between items-center group">
+            // Validar si el saldo sumado alcanza para la Gift Card seleccionada
+            const saldoProyectado = state.saldoZinli + currentCalc.netoParaGC;
+            if (currentCalc.gcCost > 0 && saldoProyectado < currentCalc.gcCost) {
+                alert(`Saldo Insuficiente.\nNecesitas $${currentCalc.gcCost.toFixed(2)} pero tu saldo disponible (+ esta recarga) es de $${saldoProyectado.toFixed(2)}`);
+                return;
+            }
+
+            // Aplicar cambios al estado global
+            state.saldoZinli = saldoProyectado - currentCalc.gcCost;
+            state.acumuladoBs += currentCalc.sobranteBs;
+
+            // Determinar tipo de operación para el historial
+            let tipoOp = "";
+            let desc = "";
+            if (currentCalc.netoParaGC > 0 && currentCalc.gcCost > 0) {
+                tipoOp = "Ciclo Completo";
+                desc = `${currentCalc.usdtInicial} USDT → GC $${currentCalc.gcGet.toFixed(1)}`;
+            } else if (currentCalc.netoParaGC > 0 && currentCalc.gcCost === 0) {
+                tipoOp = "Solo Recarga";
+                desc = `${currentCalc.usdtInicial} USDT → Saldo Zinli`;
+            } else if (currentCalc.netoParaGC === 0 && currentCalc.gcCost > 0) {
+                tipoOp = "Compra GC (Saldo)";
+                desc = `GC $${currentCalc.gcGet.toFixed(1)}`;
+            }
+
+            // Registrar en historial
+            const newOp = {
+                id: Date.now(),
+                tipo: tipoOp,
+                desc: desc,
+                profit: currentCalc.profitOp,
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            };
+
+            state.historial.unshift(newOp);
+            
+            // Guardar y Limpiar
+            saveState();
+            updateUI();
+            
+            // Limpiar inputs
+            document.getElementById('inUsdt').value = "";
+            document.getElementById('inTasaV').value = "";
+            document.getElementById('inTasaC').value = "";
+            document.getElementById('inGiftCard').value = "0";
+            calc(); // Recalcular con vacíos
+        }
+
+        function updateUI() {
+            // Actualizar Métricas Superiores
+            document.getElementById('statSaldo').innerText = "$" + state.saldoZinli.toFixed(2);
+            document.getElementById('statBs').innerText = state.acumuladoBs.toFixed(2) + " Bs";
+            
+            const totalProfit = state.historial.reduce((acc, op) => acc + op.profit, 0);
+            const pEl = document.getElementById('statProfit');
+            pEl.innerText = (totalProfit >= 0 ? "+" : "") + "$" + totalProfit.toFixed(2);
+            pEl.className = `text-xl font-bold mono ${totalProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+
+            // Renderizar Historial
+            const list = document.getElementById('historyList');
+            if(state.historial.length === 0) {
+                list.innerHTML = '<div class="text-center py-10 text-slate-600 text-[10px] uppercase font-bold tracking-widest border border-dashed border-slate-700 rounded-xl">No hay operaciones hoy</div>';
+                return;
+            }
+
+            list.innerHTML = state.historial.map(op => `
+                <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800 flex justify-between items-center group">
                     <div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-[9px] font-bold uppercase ${op.type === 'Recarga' ? 'text-blue-500' : 'text-purple-500'}">${op.type}</span>
-                            <span class="text-[9px] text-slate-600 mono">${op.time}</span>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[9px] font-bold uppercase ${op.tipo.includes('Ciclo') ? 'text-indigo-400' : (op.tipo.includes('Recarga') ? 'text-blue-400' : 'text-purple-400')}">${op.tipo}</span>
+                            <span class="text-[9px] text-slate-500 mono">${op.time}</span>
                         </div>
-                        <p class="text-xs font-bold text-slate-300">$${op.in} <span class="text-slate-600">→</span> $${op.out.toFixed(2)}</p>
+                        <p class="text-[11px] font-bold text-slate-300">${op.desc}</p>
                     </div>
-                    <div class="text-right flex items-center gap-3">
+                    <div class="text-right flex items-center gap-2">
                         <div>
-                            <p class="text-[9px] text-slate-500 font-bold uppercase">Profit</p>
+                            <p class="text-[8px] text-slate-500 font-bold uppercase">Profit</p>
                             <p class="text-xs font-bold mono ${op.profit >= 0 ? 'text-emerald-400' : 'text-red-400'}">${op.profit >= 0 ? '+' : ''}${op.profit.toFixed(2)}</p>
                         </div>
-                        <button onclick="deleteOp(${op.id})" class="opacity-0 group-hover:opacity-100 p-2 text-slate-700 hover:text-red-500 transition-all">
-                            ×
-                        </button>
+                        <button onclick="deleteOp(${op.id})" class="opacity-0 group-hover:opacity-100 p-1.5 text-slate-600 hover:text-red-500 transition-all">✕</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function updateStats() {
-            document.getElementById('statStock').innerText = `$${state.stock.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-            
-            const totalProfit = state.history.reduce((acc, curr) => acc + curr.profit, 0);
-            const pEl = document.getElementById('statProfit');
-            pEl.innerText = `${totalProfit >= 0 ? '+' : ''}$${totalProfit.toFixed(2)}`;
-            pEl.className = `text-lg font-bold mono ${totalProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
-        }
-
         function deleteOp(id) {
-            state.history = state.history.filter(o => o.id !== id);
-            saveToLocal();
-            renderHistory();
-            updateStats();
+            // Nota: Al borrar una operación del historial NO se restaura el saldo automáticamente 
+            // ya que requeriría lógica inversa compleja. Solo borra el registro visual.
+            state.historial = state.historial.filter(o => o.id !== id);
+            saveState();
+            updateUI();
         }
 
-        function resetStock() {
-            if(confirm("¿Estás seguro de reiniciar el stock y el historial?")) {
-                state.stock = 0;
-                state.history = [];
-                saveToLocal();
-                renderHistory();
-                updateStats();
+        function resetAll() {
+            if(confirm("¿Estás seguro de reiniciar todo a cero (Saldos y Acumulados)?")) {
+                state.saldoZinli = 0;
+                state.acumuladoBs = 0;
+                state.historial = [];
+                saveState();
+                updateUI();
             }
         }
 
-        function saveToLocal() {
-            localStorage.setItem('bdv_stock_v3', state.stock);
-            localStorage.setItem('bdv_history_v3', JSON.stringify(state.history));
+        function saveState() {
+            localStorage.setItem('bdv_saldo_zinli', state.saldoZinli);
+            localStorage.setItem('bdv_acumulado_bs', state.acumuladoBs);
+            localStorage.setItem('bdv_historial_day', JSON.stringify(state.historial));
         }
 
         init();
