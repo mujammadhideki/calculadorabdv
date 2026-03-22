@@ -3,382 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora BDV Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0b0e14; color: #e2e8f0; }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        .card-dark { background-color: #11141d; border: 1px solid #1e293b; }
-        .input-dark { background-color: #0b0e14; border: 1px solid #1e293b; color: white; transition: all 0.2s; }
-        .input-dark:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
-    </style>
+    <title>Calculadora de Flujo de Arbitraje</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body class="min-h-screen pb-10">
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <header class="header">
+            <h1>Flujo de Arbitraje</h1>
+            <div class="status-panel">
+                <div class="status-card">
+                    <span class="label">Límite BDV Consumido</span>
+                    <span class="value" id="valBdvLimit">$0 / $2000</span>
+                </div>
+                <div class="status-card">
+                    <span class="label">Saldo Bs Sobrante</span>
+                    <span class="value" id="valUnusedBs">0,00 Bs</span>
+                </div>
+                <div class="status-card">
+                    <span class="label">Saldo $ Sobrante</span>
+                    <span class="value" id="valUnusedUsd">$0.00</span>
+                </div>
+                <div class="status-card">
+                    <span class="label">Ganancia General</span>
+                    <span class="value" id="valTotalProfit">$0.00</span>
+                </div>
+                <div class="status-actions">
+                    <button id="btnResetOp" class="btn btn-secondary">Reset Operación</button>
+                    <button id="btnResetDay" class="btn btn-danger">Reset del Día</button>
+                </div>
+            </div>
+        </header>
 
-    <div class="max-w-6xl mx-auto px-4 py-6">
-        <!-- HEADER Y MÉTRICAS -->
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
-            <div>
-                <h1 class="text-2xl font-black italic uppercase tracking-tight">Calculadora <span class="text-blue-500">BDV PRO</span></h1>
-                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Arbitraje Continuo v4.0</p>
-            </div>
-            
-            <div class="flex flex-wrap gap-3 w-full lg:w-auto">
-                <div class="card-dark rounded-xl px-5 py-3 flex-1 lg:flex-none border-l-4 border-l-blue-500 shadow-lg">
-                    <p class="text-[9px] text-slate-400 uppercase font-bold tracking-widest">Saldo Disponible (Zinli)</p>
-                    <p id="statSaldo" class="text-xl font-bold mono text-blue-400">$0.00</p>
-                </div>
-                <div class="card-dark rounded-xl px-5 py-3 flex-1 lg:flex-none border-l-4 border-l-orange-500 shadow-lg">
-                    <p class="text-[9px] text-slate-400 uppercase font-bold tracking-widest">Acumulado Bs</p>
-                    <p id="statBs" class="text-xl font-bold mono text-orange-400">0.00 Bs</p>
-                </div>
-                <div class="card-dark rounded-xl px-5 py-3 flex-1 lg:flex-none border-l-4 border-l-emerald-500 shadow-lg">
-                    <p class="text-[9px] text-slate-400 uppercase font-bold tracking-widest">Ganancia Hoy</p>
-                    <p id="statProfit" class="text-xl font-bold mono text-emerald-400">+$0.00</p>
-                </div>
-            </div>
+        <!-- ALERTS -->
+        <div id="alertContainer" class="alert-container hidden">
+            <span id="alertMsg"></span>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            <!-- COLUMNA IZQUIERDA: CALCULADORA LINEAL -->
-            <div class="lg:col-span-8 space-y-6">
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- PASO 1: VENTA USDT -->
-                    <div class="card-dark rounded-3xl p-5 shadow-xl relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
-                        <h2 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">1. Venta de USDT</h2>
+        <div class="card bg-warning error-alert hidden" id="limitExceededAlert">
+            <p><strong>⚠️ Atención:</strong> Estás excediendo el límite de dólares en compra BDV (Restante: $2000). <span id="limitSuggestion"></span></p>
+        </div>
+
+        <!-- PASO 1: BINANCE -->
+        <section class="card flow-step">
+            <div class="step-header">
+                <span class="step-num">1</span>
+                <h2>Venta en Binance</h2>
+            </div>
+            <div class="grid-2">
+                <div class="input-group">
+                    <label>USDT a Vender</label>
+                    <input type="number" id="inUsdtVenta" placeholder="Ej: 100" min="0" step="1">
+                </div>
+                <div class="input-group">
+                    <label>Tasa de Venta (Bs/$)</label>
+                    <input type="number" id="inTasaVenta" placeholder="Ej: 64" min="0" step="0.01">
+                </div>
+                <!-- Default Fee -->
+                <div class="input-group">
+                    <label>Comisión retiro/venta (USDT)</label>
+                    <input type="number" id="inBinanceFee" value="0.02" step="0.01">
+                </div>
+            </div>
+            <div class="result-box mt-1">
+                <p>Bs Recibidos: <strong id="resBsRecibidos">0,00 Bs</strong> <span class="text-sm">(Ya restando la comisión)</span></p>
+            </div>
+        </section>
+
+        <!-- PASO 2: BDV -->
+        <section class="card flow-step">
+            <div class="step-header">
+                <span class="step-num">2</span>
+                <h2>Compra Divisas BDV</h2>
+            </div>
+            <div class="grid-2">
+                <div class="input-group">
+                    <label>Tasa Compra BDV (Bs/$)</label>
+                    <input type="number" id="inTasaBdv" placeholder="Ej: 53" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>Comisión Fija por Comprar ($)</label>
+                    <input type="number" id="inBdvFee" value="0.5" step="0.01">
+                </div>
+            </div>
+            <div class="result-box mt-1 bg-highlight">
+                <p>Bolívares Totales a Usar: <strong id="resBsTotales">0,00 Bs</strong> <span class="text-sm">(Recibidos + Sobrante)</span></p>
+                <div class="highlight-result mt-1">
+                    <p>Sugerencia de Divisas a Comprar:</p>
+                    <h3 id="resUsdComprar">$0</h3>
+                </div>
+                <p class="mt-1">Costo de Operación en BDV: <strong id="resBsCostoOperacion">0,00 Bs</strong></p>
+                <p>Sobrante No Utilizado (Para Próx.): <strong id="resBsProxima">0,00 Bs</strong></p>
+            </div>
+        </section>
+
+        <!-- PESTAÑAS ZINLI / GIFT CARD -->
+        <section class="tabs-container">
+            <div class="tabs-header">
+                <button class="tab-btn active" data-tab="zinli">Ruta Zinli</button>
+                <button class="tab-btn" data-tab="giftcard">Ruta Gift Card</button>
+            </div>
+            <div class="tabs-content">
+                <!-- TAB ZINLI -->
+                <div id="tab-zinli" class="tab-pane active">
+                    <div class="card no-border bg-tab">
+                        <h3>Compra y Recarga Zinli</h3>
+                        <p class="text-sm txt-muted mb-1">El monto disponible en divisas BDV es de: <strong id="zinliBdvDisponible">$0.00</strong></p>
                         
-                        <div class="space-y-3">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cantidad USDT a Vender</label>
-                                <input type="number" id="inUsdt" oninput="calc()" placeholder="Ej. 42.23" class="w-full input-dark p-2.5 rounded-lg mono text-sm">
+                        <div class="grid-2">
+                            <div class="input-group">
+                                <label>Monto a Depositar en Zinli ($)</label>
+                                <input type="number" id="inZinliDeposit" placeholder="Calculado automáticamente">
                             </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tasa de Venta</label>
-                                <input type="number" id="inTasaV" oninput="calc()" placeholder="Ej. 65.20" class="w-full input-dark p-2.5 rounded-lg mono text-sm">
+                            <div class="input-group">
+                                <label>Comisión Zinli (%)</label>
+                                <input type="number" id="inZinliFee" value="3.75" step="0.01">
                             </div>
-                            
-                            <div class="pt-3 border-t border-slate-800 space-y-1.5 text-[11px] mono">
-                                <div class="flex justify-between text-slate-300"><span>Bs Brutos:</span><span id="outBsBrutos">0.00 Bs</span></div>
-                                <div class="flex justify-between text-red-400"><span>Comisión Binance (0.20%):</span><span id="outComiBinance">-0.00 Bs</span></div>
-                                <div class="flex justify-between text-red-400"><span>Comisión Retiro (0.30%):</span><span id="outComiRetiro">-0.00 Bs</span></div>
-                                <div class="flex justify-between text-blue-400 font-bold pt-1"><span>Bs Netos en BDV:</span><span id="outBsNetos">0.00 Bs</span></div>
+                            <div class="input-group">
+                                <label>Comisión Banco sobre pago (%)</label>
+                                <input type="number" id="inZinliBankFee" value="2.5" step="0.01">
+                            </div>
+                            <!-- Vuelta a Binance -->
+                            <div class="input-group">
+                                <label>Comisión retorno Binance (%)</label>
+                                <input type="number" id="inBinanceReturnFee" value="6.5" step="0.01">
                             </div>
                         </div>
-                    </div>
 
-                    <!-- PASO 2: COMPRA BDV -->
-                    <div class="card-dark rounded-3xl p-5 shadow-xl relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
-                        <h2 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">2. Compra en BDV</h2>
-                        
-                        <div class="space-y-3">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tasa Compra BDV</label>
-                                <input type="number" id="inTasaC" oninput="calc()" placeholder="Ej. 51.32" class="w-full input-dark p-2.5 rounded-lg mono text-sm text-emerald-400">
-                            </div>
+                        <div class="result-box mt-1">
+                            <p>Costo del depósito en Divisas BDV: <strong id="zinliCostoBdv">$0.00</strong></p>
+                            <p>Saldo que llega a Zinli: <strong id="zinliLlega">$0.00</strong></p>
+                            <p>Vuelta a Binance (Final USDT): <strong id="zinliFinalUsdt" class="txt-success">$0.00</strong></p>
                             
-                            <div class="pt-3 mt-4 border-t border-slate-800 space-y-2 text-[11px] mono">
-                                <div class="flex justify-between text-emerald-400 font-bold text-sm"><span>Dólares Comprados BDV:</span><span id="outUsdBDV">$0</span></div>
-                                <div class="flex justify-between text-orange-400"><span>Sobrante Bs:</span><span id="outSobranteBs">0.00 Bs</span></div>
+                            <div class="profit-box mt-1">
+                                <h4>Ganancia o Pérdida:</h4>
+                                <h2 id="zinliProfit">$0.00</h2>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- PASO 3: COSTOS ZINLI -->
-                    <div class="card-dark rounded-3xl p-5 shadow-xl relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-purple-500"></div>
-                        <h2 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">3. Costos Zinli</h2>
+                <!-- TAB GIFT CARD -->
+                <div id="tab-giftcard" class="tab-pane hidden">
+                    <div class="card no-border bg-tab">
+                        <h3>Compra de Gift Card</h3>
+                        <p class="text-sm txt-muted mb-1">El monto disponible en divisas BDV es de: <strong id="gcBdvDisponible">$0.00</strong></p>
                         
-                        <div class="space-y-2.5 text-[11px] mono mt-6">
-                            <div class="flex justify-between text-red-400"><span>Costo Recarga Zinli (3.75%):</span><span id="outComiRecarga">-$0.00</span></div>
-                            <div class="flex justify-between text-slate-300"><span>Neto en Zinli:</span><span id="outNetoZinli">$0.00</span></div>
-                            <div class="flex justify-between text-red-400"><span>Costo de Servicio (2.50%):</span><span id="outComiServicio">-$0.00</span></div>
-                            <div class="flex justify-between text-purple-400 font-bold pt-2 border-t border-slate-800 text-xs"><span>Neto para Gift Cards:</span><span id="outNetoGC">$0.00</span></div>
-                        </div>
-                    </div>
-
-                    <!-- PASO 4: RESUMEN FINAL -->
-                    <div class="card-dark rounded-3xl p-5 shadow-xl relative overflow-hidden flex flex-col justify-between">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-indigo-500"></div>
-                        <div>
-                            <h2 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">4. Resumen Final</h2>
-                            
-                            <label class="block text-[10px] font-bold text-indigo-400 uppercase mb-1">Seleccionar Gift Card a Comprar</label>
-                            <select id="inGiftCard" onchange="calc()" class="w-full input-dark p-2 rounded-lg mono text-[10px] mb-4 text-indigo-300">
-                                <option value="0" data-get="0">Ninguna (Solo Acumular Saldo)</option>
-                                <!-- Se llena por JS -->
+                        <div class="input-group">
+                            <label>Selecciona la Gift Card (Recibes --> Costo Plataforma)</label>
+                            <select id="inGcSelect">
+                                <!-- Options populated by JS -->
                             </select>
+                        </div>
+                        <div class="input-group mt-1">
+                            <label>Comisión Banco sobre pago (%)</label>
+                            <input type="number" id="inGcBankFee" value="2.5" step="0.01">
+                        </div>
 
-                            <div class="space-y-1.5 text-[10px] mono">
-                                <div class="flex justify-between font-bold text-sm text-white bg-slate-800/50 p-1.5 rounded">
-                                    <span>TOTAL USD OBTENIDOS:</span><span id="outFinalUSD">$0.00</span>
-                                </div>
-                                <div class="flex justify-between text-slate-400 px-1"><span>DÓLARES INICIALES:</span><span id="outUsdtInicial">0.00</span></div>
-                                <div class="flex justify-between font-bold text-emerald-400 px-1"><span>PROFIT NETO:</span><span id="outProfit">0.00</span></div>
+                        <div class="result-box mt-1">
+                            <p>Costo Total en Divisas BDV (Monto + 2.5%): <strong id="gcCostoBdv">$0.00</strong></p>
+                            <p>Monto de Gift Card Recibido (Final): <strong id="gcFinalUsdt" class="txt-success">$0.00</strong></p>
+                            
+                            <div class="profit-box mt-1">
+                                <h4>Ganancia o Pérdida:</h4>
+                                <h2 id="gcProfit">$0.00</h2>
                             </div>
                         </div>
-
-                        <button onclick="saveOp()" class="w-full mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg active:scale-95 uppercase text-[10px] tracking-widest">
-                            Registrar Operación
-                        </button>
                     </div>
                 </div>
             </div>
+            
+            <button id="btnGuardarOp" class="btn btn-primary btn-block mt-2" style="padding: 1rem; font-size: 1.1rem;">Guardar Operación y Consumir Límite</button>
+        </section>
 
-            <!-- COLUMNA DERECHA: HISTORIAL -->
-            <div class="lg:col-span-4">
-                <div class="card-dark rounded-3xl p-5 shadow-xl h-full flex flex-col min-h-[500px]">
-                    <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                        <h2 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Historial del Día</h2>
-                        <button onclick="resetAll()" class="text-[9px] bg-red-500/10 text-red-400 hover:bg-red-500/20 px-2 py-1 rounded font-bold uppercase transition-colors">Reiniciar</button>
-                    </div>
-                    
-                    <div id="historyList" class="overflow-y-auto flex-grow space-y-3 pr-2">
-                        <!-- Items de historial -->
-                    </div>
-                </div>
+        <!-- HISTORIAL -->
+        <section class="card history-section mt-2">
+            <h2>Historial de Operaciones</h2>
+            <div class="table-responsive mt-1">
+                <table id="historyTable">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Venta USDT</th>
+                            <th>Tasa</th>
+                            <th>Divisas BDV</th>
+                            <th>Ruta Utilizada</th>
+                            <th>Recibido Final</th>
+                            <th>Ganancia ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                        <!-- Rows -->
+                    </tbody>
+                </table>
             </div>
-
-        </div>
+        </section>
     </div>
-
-    <script>
-        // Array exacto de Gift Cards
-        const giftCards = [
-            { get: 1.1, cost: 1.31 }, { get: 3.1, cost: 3.70 }, { get: 5.1, cost: 6.10 },
-            { get: 7.1, cost: 8.48 }, { get: 10.1, cost: 12.06 }, { get: 15.1, cost: 18.03 },
-            { get: 20.1, cost: 24.00 }, { get: 25.1, cost: 29.97 }, { get: 30.1, cost: 35.94 },
-            { get: 35.1, cost: 41.91 }, { get: 40.1, cost: 47.87 }, { get: 45.1, cost: 53.84 },
-            { get: 50.1, cost: 59.82 }, { get: 55.1, cost: 65.79 }, { get: 60.1, cost: 71.76 },
-            { get: 65.1, cost: 77.73 }, { get: 70.1, cost: 83.70 }, { get: 75.1, cost: 89.67 },
-            { get: 80.1, cost: 95.63 }, { get: 85.1, cost: 101.60 }, { get: 90.1, cost: 107.58 },
-            { get: 95.1, cost: 113.55 }, { get: 100.1, cost: 114.32 }
-        ];
-
-        // Estado Global (Métricas y Acumulados)
-        let state = {
-            saldoZinli: parseFloat(localStorage.getItem('bdv_saldo_zinli')) || 0,
-            acumuladoBs: parseFloat(localStorage.getItem('bdv_acumulado_bs')) || 0,
-            historial: JSON.parse(localStorage.getItem('bdv_historial_day')) || []
-        };
-
-        // Variables temporales para el cálculo actual
-        let currentCalc = {
-            netoParaGC: 0,
-            sobranteBs: 0,
-            gcCost: 0,
-            gcGet: 0,
-            usdtInicial: 0,
-            profitOp: 0
-        };
-
-        function init() {
-            const sel = document.getElementById('inGiftCard');
-            giftCards.forEach(gc => {
-                const opt = document.createElement('option');
-                opt.value = gc.cost;
-                opt.dataset.get = gc.get;
-                opt.innerText = `Tarjeta $${gc.get.toFixed(1)} (Cuesta $${gc.cost.toFixed(2)})`;
-                sel.appendChild(opt);
-            });
-            updateUI();
-        }
-
-        function calc() {
-            const uVenta = parseFloat(document.getElementById('inUsdt').value) || 0;
-            const tVenta = parseFloat(document.getElementById('inTasaV').value) || 0;
-            const tCompra = parseFloat(document.getElementById('inTasaC').value) || 0;
-
-            // --- PASO 1 ---
-            const bsBrutos = uVenta * tVenta;
-            const comiBinance = bsBrutos * 0.0020;
-            const comiRetiro = bsBrutos * 0.0030;
-            const bsNetos = bsBrutos - comiBinance - comiRetiro;
-
-            document.getElementById('outBsBrutos').innerText = bsBrutos.toFixed(2) + " Bs";
-            document.getElementById('outComiBinance').innerText = "-" + comiBinance.toFixed(2) + " Bs";
-            document.getElementById('outComiRetiro').innerText = "-" + comiRetiro.toFixed(2) + " Bs";
-            document.getElementById('outBsNetos').innerText = bsNetos.toFixed(2) + " Bs";
-
-            // --- PASO 2 ---
-            let usdBDV = 0;
-            let sobranteBs = 0;
-            if (tCompra > 0 && bsNetos > 0) {
-                usdBDV = Math.floor(bsNetos / tCompra);
-                sobranteBs = bsNetos - (usdBDV * tCompra);
-            }
-
-            document.getElementById('outUsdBDV').innerText = "$" + usdBDV;
-            document.getElementById('outSobranteBs').innerText = sobranteBs.toFixed(2) + " Bs";
-
-            // --- PASO 3 ---
-            const costoRecarga = usdBDV * 0.0375;
-            const netoZinli = usdBDV - costoRecarga;
-            const costoServicio = netoZinli * 0.0250;
-            const netoParaGC = netoZinli - costoServicio;
-
-            document.getElementById('outComiRecarga').innerText = "-$" + costoRecarga.toFixed(2);
-            document.getElementById('outNetoZinli').innerText = "$" + netoZinli.toFixed(2);
-            document.getElementById('outComiServicio').innerText = "-$" + costoServicio.toFixed(2);
-            document.getElementById('outNetoGC').innerText = "$" + netoParaGC.toFixed(2);
-
-            // --- PASO 4 (Gift Card) ---
-            const gcSelect = document.getElementById('inGiftCard');
-            const gcCost = parseFloat(gcSelect.value) || 0;
-            const gcGet = parseFloat(gcSelect.options[gcSelect.selectedIndex].dataset.get) || 0;
-
-            let finalUSD = gcGet > 0 ? gcGet : 0;
-            let profit = 0;
-
-            // Lógica de Profit: Si vende USDT, el profit es la diferencia. 
-            // Si solo acumula (no compra GC), el profit pendiente es 0.
-            if (gcGet > 0) {
-                profit = finalUSD - uVenta;
-            }
-
-            document.getElementById('outFinalUSD').innerText = "$" + finalUSD.toFixed(2);
-            document.getElementById('outUsdtInicial').innerText = uVenta.toFixed(2);
-            
-            const profitEl = document.getElementById('outProfit');
-            profitEl.innerText = (profit >= 0 ? "+" : "") + profit.toFixed(2);
-            profitEl.className = profit >= 0 ? "text-emerald-400" : "text-red-400";
-
-            // Guardar variables temporales para el momento de registrar
-            currentCalc = {
-                netoParaGC: netoParaGC,
-                sobranteBs: sobranteBs,
-                gcCost: gcCost,
-                gcGet: gcGet,
-                usdtInicial: uVenta,
-                profitOp: profit
-            };
-        }
-
-        function saveOp() {
-            // Validaciones
-            if (currentCalc.netoParaGC === 0 && currentCalc.gcCost === 0) {
-                alert("Ingresa valores para calcular o selecciona una Gift Card para comprar con tu saldo.");
-                return;
-            }
-
-            // Validar si el saldo sumado alcanza para la Gift Card seleccionada
-            const saldoProyectado = state.saldoZinli + currentCalc.netoParaGC;
-            if (currentCalc.gcCost > 0 && saldoProyectado < currentCalc.gcCost) {
-                alert(`Saldo Insuficiente.\nNecesitas $${currentCalc.gcCost.toFixed(2)} pero tu saldo disponible (+ esta recarga) es de $${saldoProyectado.toFixed(2)}`);
-                return;
-            }
-
-            // Aplicar cambios al estado global
-            state.saldoZinli = saldoProyectado - currentCalc.gcCost;
-            state.acumuladoBs += currentCalc.sobranteBs;
-
-            // Determinar tipo de operación para el historial
-            let tipoOp = "";
-            let desc = "";
-            if (currentCalc.netoParaGC > 0 && currentCalc.gcCost > 0) {
-                tipoOp = "Ciclo Completo";
-                desc = `${currentCalc.usdtInicial} USDT → GC $${currentCalc.gcGet.toFixed(1)}`;
-            } else if (currentCalc.netoParaGC > 0 && currentCalc.gcCost === 0) {
-                tipoOp = "Solo Recarga";
-                desc = `${currentCalc.usdtInicial} USDT → Saldo Zinli`;
-            } else if (currentCalc.netoParaGC === 0 && currentCalc.gcCost > 0) {
-                tipoOp = "Compra GC (Saldo)";
-                desc = `GC $${currentCalc.gcGet.toFixed(1)}`;
-            }
-
-            // Registrar en historial
-            const newOp = {
-                id: Date.now(),
-                tipo: tipoOp,
-                desc: desc,
-                profit: currentCalc.profitOp,
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-            };
-
-            state.historial.unshift(newOp);
-            
-            // Guardar y Limpiar
-            saveState();
-            updateUI();
-            
-            // Limpiar inputs
-            document.getElementById('inUsdt').value = "";
-            document.getElementById('inTasaV').value = "";
-            document.getElementById('inTasaC').value = "";
-            document.getElementById('inGiftCard').value = "0";
-            calc(); // Recalcular con vacíos
-        }
-
-        function updateUI() {
-            // Actualizar Métricas Superiores
-            document.getElementById('statSaldo').innerText = "$" + state.saldoZinli.toFixed(2);
-            document.getElementById('statBs').innerText = state.acumuladoBs.toFixed(2) + " Bs";
-            
-            const totalProfit = state.historial.reduce((acc, op) => acc + op.profit, 0);
-            const pEl = document.getElementById('statProfit');
-            pEl.innerText = (totalProfit >= 0 ? "+" : "") + "$" + totalProfit.toFixed(2);
-            pEl.className = `text-xl font-bold mono ${totalProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
-
-            // Renderizar Historial
-            const list = document.getElementById('historyList');
-            if(state.historial.length === 0) {
-                list.innerHTML = '<div class="text-center py-10 text-slate-600 text-[10px] uppercase font-bold tracking-widest border border-dashed border-slate-700 rounded-xl">No hay operaciones hoy</div>';
-                return;
-            }
-
-            list.innerHTML = state.historial.map(op => `
-                <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800 flex justify-between items-center group">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="text-[9px] font-bold uppercase ${op.tipo.includes('Ciclo') ? 'text-indigo-400' : (op.tipo.includes('Recarga') ? 'text-blue-400' : 'text-purple-400')}">${op.tipo}</span>
-                            <span class="text-[9px] text-slate-500 mono">${op.time}</span>
-                        </div>
-                        <p class="text-[11px] font-bold text-slate-300">${op.desc}</p>
-                    </div>
-                    <div class="text-right flex items-center gap-2">
-                        <div>
-                            <p class="text-[8px] text-slate-500 font-bold uppercase">Profit</p>
-                            <p class="text-xs font-bold mono ${op.profit >= 0 ? 'text-emerald-400' : 'text-red-400'}">${op.profit >= 0 ? '+' : ''}${op.profit.toFixed(2)}</p>
-                        </div>
-                        <button onclick="deleteOp(${op.id})" class="opacity-0 group-hover:opacity-100 p-1.5 text-slate-600 hover:text-red-500 transition-all">✕</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function deleteOp(id) {
-            // Nota: Al borrar una operación del historial NO se restaura el saldo automáticamente 
-            // ya que requeriría lógica inversa compleja. Solo borra el registro visual.
-            state.historial = state.historial.filter(o => o.id !== id);
-            saveState();
-            updateUI();
-        }
-
-        function resetAll() {
-            if(confirm("¿Estás seguro de reiniciar todo a cero (Saldos y Acumulados)?")) {
-                state.saldoZinli = 0;
-                state.acumuladoBs = 0;
-                state.historial = [];
-                saveState();
-                updateUI();
-            }
-        }
-
-        function saveState() {
-            localStorage.setItem('bdv_saldo_zinli', state.saldoZinli);
-            localStorage.setItem('bdv_acumulado_bs', state.acumuladoBs);
-            localStorage.setItem('bdv_historial_day', JSON.stringify(state.historial));
-        }
-
-        init();
-    </script>
+    
+    <script src="app.js"></script>
 </body>
 </html>
