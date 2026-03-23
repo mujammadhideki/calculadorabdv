@@ -1,16 +1,16 @@
 // Datos predefinidos para la Gift Card (extraídos de la imagen)
 const gcOptions = [
-    { rec: 1.1, cost: 1.31 }, { rec: 3.1, cost: 3.70 }, { rec: 5.1, cost: 6.10 },
-    { rec: 7.1, cost: 8.48 }, { rec: 10.1, cost: 12.06 }, { rec: 15.1, cost: 18.03 },
-    { rec: 20.1, cost: 24.00 }, { rec: 25.1, cost: 29.97 }, { rec: 30.1, cost: 35.94 },
-    { rec: 35.1, cost: 41.91 }, { rec: 40.1, cost: 47.87 }, { rec: 45.1, cost: 53.84 },
-    { rec: 50.1, cost: 59.82 }, { rec: 55.1, cost: 65.79 }, { rec: 60.1, cost: 71.76 },
-    { rec: 65.1, cost: 77.73 }, { rec: 70.1, cost: 83.70 }, { rec: 75.1, cost: 89.67 },
-    { rec: 80.1, cost: 95.63 }, { rec: 85.1, cost: 101.60 }, { rec: 90.1, cost: 107.58 },
-    { rec: 95.1, cost: 113.55 }, { rec: 100.1, cost: 114.32 }, { rec: 110.1, cost: 125.74 },
-    { rec: 120.1, cost: 137.16 }, { rec: 130.1, cost: 148.58 }, { rec: 140.1, cost: 160.00 },
-    { rec: 150.1, cost: 171.42 }, { rec: 160.1, cost: 182.84 }, { rec: 170.1, cost: 194.27 },
-    { rec: 180.1, cost: 205.69 }, { rec: 190.1, cost: 217.11 }, { rec: 200.1, cost: 228.53 }
+    { rec: 1, cost: 1.35 }, { rec: 3, cost: 3.73 }, { rec: 5, cost: 6.12 },
+    { rec: 7, cost: 8.51 }, { rec: 10, cost: 12.09 }, { rec: 15, cost: 18.06 },
+    { rec: 20, cost: 24.02 }, { rec: 25, cost: 30.00 }, { rec: 30, cost: 35.97 },
+    { rec: 35, cost: 41.94 }, { rec: 40, cost: 47.91 }, { rec: 45, cost: 53.88 },
+    { rec: 50, cost: 59.85 }, { rec: 55, cost: 65.81 }, { rec: 60, cost: 71.78 },
+    { rec: 65, cost: 77.76 }, { rec: 70, cost: 83.73 }, { rec: 75, cost: 89.70 },
+    { rec: 80, cost: 95.67 }, { rec: 85, cost: 101.64 }, { rec: 90, cost: 107.61 },
+    { rec: 95, cost: 113.57 }, { rec: 100, cost: 114.36 }, { rec: 110, cost: 125.78 },
+    { rec: 120, cost: 137.20 }, { rec: 130, cost: 148.62 }, { rec: 140, cost: 160.04 },
+    { rec: 150, cost: 171.46 }, { rec: 160, cost: 182.88 }, { rec: 170, cost: 194.30 },
+    { rec: 180, cost: 205.72 }, { rec: 190, cost: 217.14 }, { rec: 200, cost: 228.56 }
 ];
 
 // Estado global de la aplicación
@@ -62,6 +62,16 @@ function bindEvents() {
     const inputs = document.querySelectorAll('input:not(.no-calc), select');
     inputs.forEach(el => el.addEventListener('input', calculateFlow));
 
+    // Handle initial balance
+    const inSobranteUsd = document.getElementById('inSobranteUsd');
+    if (inSobranteUsd) {
+        inSobranteUsd.addEventListener('change', (e) => {
+            state.unusedBalanceUsd = parseFloat(e.target.value) || 0;
+            saveState();
+            calculateFlow();
+        });
+    }
+
     // Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -85,6 +95,11 @@ function updateHeaderUI() {
     document.getElementById('valBdvLimit').textContent = `$${state.bdvUsedLimit} / $${state.bdvMaxLimit}`;
     document.getElementById('valUnusedBs').textContent = formatBs(state.unusedBalanceBs);
     document.getElementById('valUnusedUsd').textContent = formatUsd(state.unusedBalanceUsd);
+    
+    const inSobranteUsd = document.getElementById('inSobranteUsd');
+    if (inSobranteUsd && document.activeElement !== inSobranteUsd) {
+        inSobranteUsd.value = state.unusedBalanceUsd.toFixed(2);
+    }
     
     const profitEl = document.getElementById('valTotalProfit');
     profitEl.textContent = formatUsd(state.totalProfit);
@@ -201,8 +216,8 @@ function calculateZinli(initialUsdt, maxUsdAvailable) {
     calcState.zinli.deposit = deposit;
     calcState.zinli.costBdv = totalBdvCost;
     calcState.zinli.finalUsdt = finalUsdt;
-    // La ganancia individual es el retorno final más la diferencia de saldo USD sobrante
-    calcState.zinli.profit = finalUsdt + (newUnusedUsd - state.unusedBalanceUsd) - initialUsdt;
+    // La ganancia individual descuenta el fee de 2.5% del saldo sobrante / usado
+    calcState.zinli.profit = finalUsdt + (newUnusedUsd - state.unusedBalanceUsd) * (1 - bankFeePerc) - initialUsdt;
     calcState.zinli.newUnusedUsd = newUnusedUsd;
 
     document.getElementById('zinliCostoBdv').textContent = formatUsd(totalBdvCost);
@@ -276,8 +291,8 @@ function calculateGiftCard(initialUsdt, maxUsdAvailable) {
     calcState.gc.selected = selectedOpt;
     calcState.gc.costBdv = totalBdvCost;
     calcState.gc.finalUsdt = finalUsdt;
-    // La ganancia individual es el retorno final más la diferencia de saldo USD sobrante
-    calcState.gc.profit = finalUsdt + (newUnusedUsd - state.unusedBalanceUsd) - initialUsdt;
+    // La ganancia individual descuenta el fee de 2.5% del saldo sobrante / usado
+    calcState.gc.profit = finalUsdt + (newUnusedUsd - state.unusedBalanceUsd) * (1 - gcBankFeePerc) - initialUsdt;
     calcState.gc.newUnusedUsd = newUnusedUsd;
 
     document.getElementById('gcCostoBdv').textContent = formatUsd(totalBdvCost);
